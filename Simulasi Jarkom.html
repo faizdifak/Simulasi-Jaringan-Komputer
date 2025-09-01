@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Jaringan Komputer </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0c0c0c 0%, #1e3a5f 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            color: #4fc3f7;
+            text-shadow: 0 0 25px rgba(79, 195, 247, 0.6);
+        }
+
+        .header p {
+            color: #b3e5fc;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 25px;
+            height: 75vh;
+            margin-bottom: 30px;
+        }
+
+        .network-canvas {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            min-height: 600px;
+        }
+
+        .device {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 120px;
+            z-index: 2;
+        }
+
+        .device:hover {
+            transform: scale(1.08) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(79, 195, 247, 0.4);
+            border-color: #4fc3f7;
+        }
+
+        .device.active {
+            box-shadow: 0 0 40px rgba(76, 175, 80, 0.6);
+            border-color: #4caf50;
+            transform: scale(1.05);
+        }
+
+        .device.end-device {
+            background: linear-gradient(145deg, rgba(79, 195, 247, 0.2), rgba(79, 195, 247, 0.1));
+        }
+
+        .device.intermediary {
+            background: linear-gradient(145deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+        }
+
+        .device-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            padding: 10px;
+        }
+
+        .device-label {
+            font-weight: bold;
+            text-align: center;
+            font-size: 1rem;
+            color: #e3f2fd;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .connection {
+            position: absolute;
+            background: linear-gradient(90deg, #4fc3f7, #29b6f6, #03a9f4);
+            height: 4px;
+            transform-origin: 0 50%;
+            z-index: 1;
+            border-radius: 2px;
+        }
+
+        .connection.wired {
+            background: linear-gradient(90deg, #4caf50, #2e7d32, #1b5e20);
+        }
+
+        .data-packet {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(145deg, #ff4081, #f50057);
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 0 15px #ff4081;
+            animation: pulse 1.5s infinite;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 25px;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .info-panel h2 {
+            color: #4caf50;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 3px solid rgba(76, 175, 80, 0.4);
+            padding-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .device-info {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .device-info.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .info-item {
+            margin-bottom: 18px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            border-left: 5px solid #4fc3f7;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-title::before {
+            content: "📋";
+            font-size: 1.2rem;
+        }
+
+        .info-description {
+            color: #e3f2fd;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4fc3f7, #0288d1);
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(2, 136, 209, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.reset {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+
+        .simulation-status {
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .status-header {
+            color: #ff9800;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+
+        .status-content {
+            color: #ffcc80;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            min-height: 80px;
+        }
+
+        .status-step {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #ff9800;
+        }
+
+        .simulation-progress {
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .legend {
+            max-width: 1600px;
+            margin: 80px auto 100px auto;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .legend h3 {
+            color: #ff4081;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.4rem;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            gap: 15px;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .legend-text {
+            color: #e3f2fd;
+            font-size: 0.95rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes dataFlow {
+            0% { transform: translateX(0) translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(var(--dx)) translateY(var(--dy)); opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .simulation-area {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .network-canvas {
+                height: 500px;
+                margin-bottom: 20px;
+            }
+            
+            .info-panel {
+                height: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .legend-items {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .simulation-status {
+                max-height: 150px;
+            }
+            
+            .legend {
+                margin: 0 15px 30px 15px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Simulasi Jaringan Komputer </h1>
+            <p>Visualisasi interaktif antara End Devices (PC, Server) dan Intermediary Devices (Hub, Switch, Router) dengan alur data real-time</p>
+        </div>
+
+        <div class="simulation-area">
+            <div class="network-canvas" id="networkCanvas">
+                <!-- Devices and connections will be added dynamically -->
+            </div>
+
+            <div class="info-panel">
+                <h2>📊 Informasi Perangkat</h2>
+
+                <!-- Device Information Sections -->
+                <div class="device-info active" id="defaultInfo">
+                    <div class="info-item">
+                        <div class="info-title">Selamat Datang di Simulasi Jaringan</div>
+                        <div class="info-description">
+                            Klik pada perangkat jaringan untuk mempelajari fungsi dan cara kerjanya. Gunakan tombol simulasi untuk melihat alur data secara visual.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">Cara Menggunakan</div>
+                        <div class="info-description">
+                            1. Klik perangkat untuk melihat informasi<br>
+                            2. Klik "Jalankan Simulasi" untuk melihat alur data<br>
+                            3. Perhatikan panel status untuk penjelasan detail<br>
+                            4. Gunakan "Reset" untuk mengulang simulasi
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-info" id="pcInfo">
+                    <div class="info-item">
+                        <div class="info-title">💻 Personal Computer (PC)</div>
+                        <div class="info-description">
+                            Perangkat akhir yang digunakan pengguna untuk mengakses jaringan, mengirim dan menerima data, serta berkomunikasi dengan perangkat lain.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🎯 Fungsi Utama</div>
+                        <div class="info-description">
+                            • Mengirim dan menerima data<br>
+                            • Menjalankan aplikasi jaringan<br>
+                            • Berinteraksi dengan pengguna<br>
+                            • Mengakses layanan dari server
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🔄 Alur Data</div>
+                        <div class="info-description">
+                            Data mengalir dari PC ke Switch/Hub, kemudian diteruskan ke perangkat tujuan. Setiap paket data mengandung alamat tujuan yang menentukan rutenya.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-info" id="serverInfo">
+                    <div class="info-item">
+                        <div class="info-title">🖥️ Server</div>
+                        <div class="info-description">
+                            Perangkat yang menyediakan layanan, resources, dan data untuk seluruh jaringan. Bertindak sebagai pusat layanan untuk klien-klien.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🎯 Fungsi Utama</div>
+                        <div class="info-description">
+                            • Menyimpan dan mengelola data<br>
+                            • Melayani permintaan dari klien<br>
+                            • Hosting aplikasi dan website<br>
+                            • Mengontrol akses jaringan
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🔄 Alur Data</div>
+                        <div class="info-description">
+                            Menerima permintaan data dari perangkat lain, memproses permintaan, dan mengirimkan respon balik melalui perangkat intermediary.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-info" id="hubInfo">
+                    <div class="info-item">
+                        <div class="info-title">📡 Hub</div>
+                        <div class="info-description">
+                            Perangkat intermediary sederhana yang meneruskan data ke semua port secara broadcast tanpa filter. Tidak cerdas dalam mengelola traffic.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🎯 Fungsi Utama</div>
+                        <div class="info-description">
+                            • Menghubungkan multiple perangkat<br>
+                            • Meneruskan data ke semua port<br>
+                            • Memperluas jaringan fisik<br>
+                            • Termurah dan termudah dalam setup
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">⚠️ Kekurangan</div>
+                        <div class="info-description">
+                            • Boros bandwidth karena broadcast<br>
+                            • Tidak bisa filter MAC address<br>
+                            • Dapat menyebabkan collision<br>
+                            • Keamanan rendah
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-info" id="switchInfo">
+                    <div class="info-item">
+                        <div class="info-title">🔀 Switch</div>
+                        <div class="info-description">
+                            Perangkat intermediary cerdas yang meneruskan data berdasarkan MAC address. Lebih efisien daripada Hub dan mengurangi collision.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🎯 Fungsi Utama</div>
+                        <div class="info-description">
+                            • Meneruskan data berdasarkan MAC<br>
+                            • Mengurangi collision domain<br>
+                            • Mengoptimalkan bandwidth<br>
+                            • Learning dan forwarding table
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">⭐ Kelebihan vs Hub</div>
+                        <div class="info-description">
+                            • Tidak boros bandwidth<br>
+                            • Keamanan lebih baik<br>
+                            • Performa lebih tinggi<br>
+                            • Bisa VLAN configuration
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-info" id="routerInfo">
+                    <div class="info-item">
+                        <div class="info-title">🌐 Router</div>
+                        <div class="info-description">
+                            Perangkat yang menghubungkan jaringan berbeda dan menentukan rute terbaik untuk data berdasarkan IP address. Gateway ke internet.
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🎯 Fungsi Utama</div>
+                        <div class="info-description">
+                            • Routing data antar jaringan<br>
+                            • NAT (Network Address Translation)<br>
+                            • Firewall dan keamanan<br>
+                            • DHCP server
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-title">🛡️ Keamanan</div>
+                        <div class="info-description">
+                            • Packet filtering<br>
+                            • Access control lists<br>
+                            • VPN support<br>
+                            • Port forwarding
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="btn" onclick="startSimulation()">
+                        <span>▶️</span> Jalankan Simulasi
+                    </button>
+                    <button class="btn reset" onclick="resetSimulation()">
+                        <span>🔄</span> Reset
+                    </button>
+                </div>
+
+                <!-- Simulation Status - Dipindahkan ke bawah -->
+                <div class="simulation-status">
+                    <div class="status-header">
+                        <span>📊 Status Simulasi</span>
+                    </div>
+                    <div class="status-content" id="statusContent">
+                        <div class="status-step">Simulasi belum dijalankan. Klik "Jalankan Simulasi" untuk memulai.</div>
+                    </div>
+                    <div class="simulation-progress">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legenda dipindahkan ke bawah container utama -->
+    <div class="legend">
+        <h3>📋 Legenda dan Simbol</h3>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4fc3f7;"></div>
+                <div class="legend-text">End Device (PC, Server) - Perangkat pengguna</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4caf50;"></div>
+                <div class="legend-text">Intermediary Device (Switch, Router, Hub) - Penghubung</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff4081;"></div>
+                <div class="legend-text">Paket Data - Informasi yang dikirim melalui jaringan</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #29b6f6;"></div>
+                <div class="legend-text">Koneksi Wireless - Tanpa kabel (Wi-Fi)</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2e7d32;"></div>
+                <div class="legend-text">Koneksi Wired - Dengan kabel Ethernet</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff9800;"></div>
+                <div class="legend-text">Status Aktif - Perangkat sedang memproses data</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced device configuration with better positioning
+        const devices = [
+            {
+                id: 'pc1',
+                type: 'end',
+                name: 'PC 1',
+                icon: '💻',
+                position: { x: 100, y: 100 },
+                connections: ['switch1'],
+                connectionType: 'wired'
+            },
+            {
+                id: 'pc2',
+                type: 'end',
+                name: 'PC 2',
+                icon: '💻',
+                position: { x: 100, y: 250 },
+                connections: ['hub1'],
+                connectionType: 'wired'
+            },
+            {
+                id: 'server1',
+                type: 'end',
+                name: 'Web Server',
+                icon: '🖥️',
+                position: { x: 700, y: 100 },
+                connections: ['switch1'],
+                connectionType: 'wired'
+            },
+            {
+                id: 'hub1',
+                type: 'intermediary',
+                name: 'Hub',
+                icon: '📡',
+                position: { x: 300, y: 350 },
+                connections: ['pc2', 'router1'],
+                connectionType: 'wired'
+            },
+            {
+                id: 'switch1',
+                type: 'intermediary',
+                name: 'Switch',
+                icon: '🔀',
+                position: { x: 300, y: 100 },
+                connections: ['pc1', 'server1', 'router1'],
+                connectionType: 'wired'
+            },
+            {
+                id: 'router1',
+                type: 'intermediary',
+                name: 'Router',
+                icon: '🌐',
+                position: { x: 500, y: 200 },
+                connections: ['switch1', 'hub1'],
+                connectionType: 'wired'
+            }
+        ];
+
+        let activeDevice = null;
+        let isSimulating = false;
+        const canvas = document.getElementById('networkCanvas');
+        const connections = [];
+        const statusContent = document.getElementById('statusContent');
+        const progressBar = document.getElementById('progressBar');
+
+        // Initialize simulation with proper positioning
+        function initSimulation() {
+            createDevices();
+            createConnections();
+            addEventListeners();
+            updateStatus("Simulasi siap! Klik perangkat untuk mempelajari atau jalankan simulasi.");
+        }
+
+        // Create device elements with proper positioning
+        function createDevices() {
+            const canvasWidth = canvas.offsetWidth;
+            const canvasHeight = canvas.offsetHeight;
+            
+            devices.forEach(device => {
+                // Adjust positions based on canvas size
+                const adjustedX = (device.position.x / 800) * canvasWidth;
+                const adjustedY = (device.position.y / 500) * canvasHeight;
+                
+                const deviceEl = document.createElement('div');
+                deviceEl.className = `device ${device.type}-device ${device.connectionType}`;
+                deviceEl.id = device.id;
+                deviceEl.style.left = `${adjustedX}px`;
+                deviceEl.style.top = `${adjustedY}px`;
+                
+                deviceEl.innerHTML = `
+                    <div class="device-icon">${device.icon}</div>
+                    <div class="device-label">${device.name}</div>
+                `;
+                
+                canvas.appendChild(deviceEl);
+            });
+        }
+
+        // Create connection lines with accurate positioning
+        function createConnections() {
+            devices.forEach(device => {
+                device.connections.forEach(targetId => {
+                    const targetDevice = devices.find(d => d.id === targetId);
+                    if (targetDevice) {
+                        createConnection(device, targetDevice);
+                    }
+                });
+            });
+        }
+
+        function createConnection(source, target) {
+            const connection = document.createElement('div');
+            connection.className = `connection ${source.connectionType}`;
+            
+            const sourceEl = document.getElementById(source.id);
+            const targetEl = document.getElementById(target.id);
+            
+            if (!sourceEl || !targetEl) return;
+            
+            const sourceRect = sourceEl.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            const x1 = sourceRect.left - canvasRect.left + sourceRect.width / 2;
+            const y1 = sourceRect.top - canvasRect.top + sourceRect.height / 2;
+            const x2 = targetRect.left - canvasRect.left + targetRect.width / 2;
+            const y2 = targetRect.top - canvasRect.top + targetRect.height / 2;
+            
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            connection.style.width = `${length}px`;
+            connection.style.left = `${x1}px`;
+            connection.style.top = `${y1}px`;
+            connection.style.transform = `rotate(${angle}deg)`;
+            
+            connections.push({
+                element: connection,
+                source: source.id,
+                target: target.id,
+                x1, y1, x2, y2, dx, dy, length, angle
+            });
+            
+            canvas.appendChild(connection);
+        }
+
+        // Add event listeners
+        function addEventListeners() {
+            devices.forEach(device => {
+                const deviceEl = document.getElementById(device.id);
+                deviceEl.addEventListener('click', () => {
+                    showDeviceInfo(device.id);
+                });
+            });
+        }
+
+        // Show device information
+        function showDeviceInfo(deviceId) {
+            if (isSimulating) return;
+            
+            document.querySelectorAll('.device').forEach(dev => {
+                dev.classList.remove('active');
+            });
+            
+            const deviceEl = document.getElementById(deviceId);
+            deviceEl.classList.add('active');
+            
+            document.querySelectorAll('.device-info').forEach(info => {
+                info.classList.remove('active');
+            });
+            
+            const device = devices.find(d => d.id === deviceId);
+            if (device) {
+                let infoPanelId;
+                if (device.type === 'end') {
+                    infoPanelId = device.name.includes('PC') ? 'pcInfo' : 'serverInfo';
+                } else {
+                    infoPanelId = device.name.includes('Hub') ? 'hubInfo' : 
+                                 device.name.includes('Switch') ? 'switchInfo' : 'routerInfo';
+                }
+                
+                const infoPanel = document.getElementById(infoPanelId);
+                if (infoPanel) {
+                    infoPanel.classList.add('active');
+                    updateStatus(`Mempelajari: ${device.name} - ${device.type.toUpperCase()} Device`);
+                }
+            }
+        }
+
+        // Update status messages
+        function updateStatus(message, isStep = false) {
+            if (isStep) {
+                const step = document.createElement('div');
+                step.className = 'status-step';
+                step.textContent = `⏱️ ${message}`;
+                statusContent.appendChild(step);
+            } else {
+                statusContent.innerHTML = `<div class="status-step">${message}</div>`;
+            }
+            statusContent.scrollTop = statusContent.scrollHeight;
+        }
+
+        // Update progress bar
+        function updateProgress(percentage) {
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        // Enhanced data flow simulation with multiple paths
+        function startSimulation() {
+            if (isSimulating) return;
+            isSimulating = true;
+            
+            resetSimulation();
+            updateStatus("🚀 Memulai simulasi jaringan...");
+            updateProgress(10);
+
+            // Multiple data paths for different scenarios
+            const scenarios = [
+                {
+                    name: "PC 1 → Switch → Web Server (Efisien)",
+                    path: ['pc1', 'switch1', 'server1'],
+                    delay: 1500,
+                    description: "Data dikirim melalui Switch yang cerdas - hanya ke tujuan"
+                },
+                {
+                    name: "PC 2 → Hub → Router (Broadcast)",
+                    path: ['pc2', 'hub1', 'router1'],
+                    delay: 2000,
+                    description: "Data dikirim melalui Hub - broadcast ke semua port"
+                },
+                {
+                    name: "Web Server → Switch → Router",
+                    path: ['server1', 'switch1', 'router1'],
+                    delay: 1800,
+                    description: "Respon server menuju internet melalui Router"
+                }
+            ];
+
+            let totalDuration = 0;
+            scenarios.forEach(scenario => {
+                totalDuration += scenario.delay;
+            });
+
+            let currentTime = 0;
+            scenarios.forEach((scenario, index) => {
+                setTimeout(() => {
+                    updateStatus(`🔁 Scenario ${index + 1}: ${scenario.name}`);
+                    updateStatus(`📝 ${scenario.description}`, true);
+                    
+                    simulateScenario(scenario.path, scenario.delay).then(() => {
+                        const progress = 10 + ((index + 1) / scenarios.length) * 80;
+                        updateProgress(progress);
+                        
+                        if (index === scenarios.length - 1) {
+                            setTimeout(() => {
+                                updateStatus("✅ Simulasi selesai! Semua scenario berhasil dijalankan.");
+                                updateStatus("💡 Pelajaran: Switch lebih efisien daripada Hub, Router untuk koneksi external", true);
+                                isSimulating = false;
+                            }, 1000);
+                        }
+                    });
+                }, currentTime);
+                currentTime += scenario.delay + 1000;
+            });
+        }
+
+        // Simulate individual scenario
+        async function simulateScenario(path, duration) {
+            return new Promise((resolve) => {
+                let completed = 0;
+                const totalSteps = path.length - 1;
+                
+                for (let i = 0; i < totalSteps; i++) {
+                    setTimeout(() => {
+                        const sourceId = path[i];
+                        const targetId = path[i + 1];
+                        
+                        // Highlight active devices
+                        document.querySelectorAll('.device').forEach(dev => {
+                            dev.classList.remove('active');
+                        });
+                        document.getElementById(sourceId)?.classList.add('active');
+                        document.getElementById(targetId)?.classList.add('active');
+                        
+                        // Animate data flow
+                        animateDataFlow(sourceId, targetId, duration / totalSteps);
+                        
+                        // Update status
+                        const sourceName = devices.find(d => d.id === sourceId)?.name;
+                        const targetName = devices.find(d => d.id === targetId)?.name;
+                        updateStatus(`📤 ${sourceName} → 📥 ${targetName}`, true);
+                        
+                        completed++;
+                        if (completed === totalSteps) {
+                            setTimeout(resolve, duration / totalSteps + 100);
+                        }
+                    }, i * (duration / totalSteps));
+                }
+            });
+        }
+
+        // Enhanced data flow animation with proper positioning
+        function animateDataFlow(sourceId, targetId, duration) {
+            const connection = connections.find(conn => 
+                conn.source === sourceId && conn.target === targetId
+            );
+            
+            if (connection) {
+                const packet = document.createElement('div');
+                packet.className = 'data-packet';
+                packet.style.left = `${connection.x1}px`;
+                packet.style.top = `${connection.y1}px`;
+                packet.style.setProperty('--dx', `${connection.dx}px`);
+                packet.style.setProperty('--dy', `${connection.dy}px`);
+                packet.style.animation = `dataFlow ${duration}ms linear forwards`;
+                
+                canvas.appendChild(packet);
+                
+                // Remove packet after animation
+                setTimeout(() => {
+                    packet.remove();
+                }, duration);
+            }
+        }
+
+        // Reset simulation
+        function resetSimulation() {
+            document.querySelectorAll('.data-packet').forEach(packet => {
+                packet.remove();
+            });
+            
+            document.querySelectorAll('.device').forEach(dev => {
+                dev.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.device-info').forEach(info => {
+                info.classList.remove('active');
+            });
+            
+            document.getElementById('defaultInfo').classList.add('active');
+            updateStatus("🔄 Simulasi direset. Klik perangkat atau jalankan simulasi baru.");
+            updateProgress(0);
+            isSimulating = false;
+        }
+
+        // Recreate connections on resize for responsive design
+        function handleResize() {
+            document.querySelectorAll('.connection').forEach(conn => conn.remove());
+            document.querySelectorAll('.device').forEach(dev => dev.remove());
+            createDevices();
+            createConnections();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initSimulation);
+        window.addEventListener('resize', handleResize);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                startSimulation();
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetSimulation();
+            }
+        });
+    </script>
+</body>
+</html>
+
